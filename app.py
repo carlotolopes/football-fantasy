@@ -624,8 +624,8 @@ def login_screen():
 
             if submit and name:
                 if not password:
-                st.error("Please enter a password.")
-                return
+                    st.error("Please enter a password.")
+                    return
 
                 conn = get_conn()
                 cursor = conn.cursor()
@@ -639,25 +639,25 @@ def login_screen():
                         st.session_state['player'] = player
                         conn.close()
                         st.rerun()
+                    else:
+                        st.error("Incorrect password!")
+                        conn.close()
+                        return
                 else:
-                    st.error("Incorrect password!")
-                    conn.close()
-                    return
-            else:
-                cursor.execute(
+                    cursor.execute(
                     "INSERT INTO players (name, password_hash) VALUES (?, ?)",
                     (name, pw_hash)
-                )
-                new_id = cursor.lastrowid
-                conn.commit()
-                cursor.execute("""
-                    INSERT OR IGNORE INTO standings (player_id) VALUES (?)
-                """, (new_id,))
-                conn.commit()
-                conn.close()
-                st.success("Account created! Please sign in.")
-                st.rerun()
-            conn.close()
+                    )
+                    new_id = cursor.lastrowid
+                    conn.commit()
+                    cursor.execute("""
+                        INSERT OR IGNORE INTO standings (player_id) VALUES (?)
+                    """, (new_id,))
+                    conn.commit()
+                    conn.close()
+                    st.success("Account created! Please sign in.")
+                    st.rerun()
+                    conn.close()
 
         st.markdown("---")
         st.markdown("""
