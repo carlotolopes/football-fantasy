@@ -7,11 +7,11 @@ Original file is located at
     https://colab.research.google.com/drive/12dF6zebQwgWmq2NNke2kkwm_JIGc5y8X
 """
 
-#%pip install Streamlit
-#%pip install requests
 """
-FOOTBALL FANTASY — BRASILEIRÃO SÉRIE A & B
-Streamlit App — versão completa
+FOOTBALL FANTASY — UK EDITION
+Premier League, EFL Championship, League One, League Two
+Scottish Premiership, Championship, League One, League Two
+Streamlit App — Full Version
 """
 
 import streamlit as st
@@ -25,49 +25,126 @@ import os
 from datetime import datetime, timezone, timedelta
 
 #
-# CONFIGURAÇÃO
+# CONFIGURATION
 #
 
 DB_PATH = "football_fantasy.db"
-SERIE_A_ID = 71
-SERIE_B_ID = 72
 SEASON = 2026
-API_BASE = "https://v3.football.api-sports.io"
-MAX_PICKS = 5  # cada jogador escolhe 5 times por rodada
+MAX_PICKS = 5
 BONUS_POINTS = 1
 WIN_POINTS = 3
 DRAW_POINTS = 1
 
-# Times padrão (fallback caso API não esteja configurada)
-SERIE_A_TEAMS = [
-    "Palmeiras", "Flamengo", "Fluminense", "Red Bull Bragantino",
-    "Athletico PR", "Bahia", "Coritiba", "São Paulo", "Cruzeiro",
-    "Corinthians", "Internacional", "Santos", "Chapecoense", "Grêmio",
-    "Vasco da Gama", "Mirassol", "Botafogo", "Vitória", "Remo", "Atlético MG"
+# API-Football v3 League IDs
+PREMIER_LEAGUE_ID = 39
+CHAMPIONSHIP_ID = 40
+LEAGUE_ONE_ID = 41
+LEAGUE_TWO_ID = 42
+SCOTTISH_PREMIERSHIP_ID = 179
+SCOTTISH_CHAMPIONSHIP_ID = 180
+SCOTTISH_LEAGUE_ONE_ID = 181
+SCOTTISH_LEAGUE_TWO_ID = 182
+
+API_BASE = "https://v3.football.api-sports.io"
+
+# All leagues
+LEAGUES = [
+    ("Premier League", PREMIER_LEAGUE_ID),
+    ("Championship", CHAMPIONSHIP_ID),
+    ("League One", LEAGUE_ONE_ID),
+    ("League Two", LEAGUE_TWO_ID),
+    ("Scottish Premiership", SCOTTISH_PREMIERSHIP_ID),
+    ("Scottish Championship", SCOTTISH_CHAMPIONSHIP_ID),
+    ("Scottish League One", SCOTTISH_LEAGUE_ONE_ID),
+    ("Scottish League Two", SCOTTISH_LEAGUE_TWO_ID),
 ]
 
-SERIE_B_TEAMS = [
-    "Ceará", "CRB", "Novorizontino", "Criciúma", "Goiás", "Vila Nova",
-    "Náutico", "Avaí", "Ponte Preta", "Londrina", "São Bernardo",
-    "Botafogo SP", "América MG", "Operário", "Ituano", "Tombense",
-    "Sampaio Corrêa", "ABC", "Guarani", "Chapecoense B"
+# Full team lists 2026/27
+PREMIER_LEAGUE_TEAMS = [
+    "Arsenal", "Aston Villa", "Bournemouth", "Brentford",
+    "Brighton and Hove Albion", "Chelsea", "Coventry City",
+    "Crystal Palace", "Everton", "Fulham", "Hull City",
+    "Ipswich Town", "Leeds United", "Liverpool",
+    "Manchester City", "Manchester United", "Newcastle United",
+    "Nottingham Forest", "Sunderland", "Tottenham Hotspur"
 ]
 
-ALL_TEAMS = sorted(set(SERIE_A_TEAMS + SERIE_B_TEAMS))
+CHAMPIONSHIP_TEAMS = [
+    "Birmingham City", "Blackburn Rovers", "Bolton Wanderers",
+    "Bristol City", "Burnley", "Cardiff City", "Charlton Athletic",
+    "Derby County", "Lincoln City", "Middlesbrough", "Millwall",
+    "Norwich City", "Portsmouth", "Preston North End",
+    "Queens Park Rangers", "Sheffield United", "Southampton",
+    "Stoke City", "Swansea City", "Watford", "West Bromwich Albion",
+    "West Ham United", "Wolverhampton Wanderers", "Wrexham"
+]
+
+LEAGUE_ONE_TEAMS = [
+    "AFC Wimbledon", "Barnsley", "Blackpool", "Bradford City",
+    "Bromley", "Burton Albion", "Cambridge United",
+    "Doncaster Rovers", "Huddersfield Town", "Leicester City",
+    "Leyton Orient", "Luton Town", "Mansfield Town",
+    "Milton Keynes Dons", "Notts County", "Oxford United",
+    "Peterborough United", "Plymouth Argyle", "Reading",
+    "Sheffield Wednesday", "Stevenage", "Stockport County",
+    "Wigan Athletic", "Wycombe Wanderers"
+]
+
+LEAGUE_TWO_TEAMS = [
+    "Accrington Stanley", "Barnet", "Bristol Rovers",
+    "Cheltenham Town", "Chesterfield", "Colchester United",
+    "Crawley Town", "Crewe Alexandra", "Exeter City",
+    "Fleetwood Town", "Gillingham", "Grimsby Town",
+    "Newport County", "Northampton Town", "Oldham Athletic",
+    "Port Vale", "Rochdale", "Rotherham United",
+    "Salford City", "Shrewsbury Town", "Swindon Town",
+    "Tranmere Rovers", "Walsall", "York City"
+]
+
+SCOTTISH_PREMIERSHIP_TEAMS = [
+    "Aberdeen", "Celtic", "Dundee", "Dundee United",
+    "Falkirk", "Heart of Midlothian", "Hibernian",
+    "Kilmarnock", "Motherwell", "Rangers",
+    "St Johnstone", "St Mirren"
+]
+
+SCOTTISH_CHAMPIONSHIP_TEAMS = [
+    "Arbroath", "Ayr United", "Dunfermline Athletic",
+    "Greenock Morton", "Inverness Caledonian Thistle",
+    "Livingston", "Partick Thistle", "Queen's Park",
+    "Raith Rovers", "Stenhousemuir"
+]
+
+SCOTTISH_LEAGUE_ONE_TEAMS = [
+    "Airdrieonians", "Alloa Athletic", "Cove Rangers",
+    "East Fife", "East Kilbride", "Hamilton Academical",
+    "Montrose", "Peterhead", "Queen of the South",
+    "Ross County"
+]
+
+SCOTTISH_LEAGUE_TWO_TEAMS = [
+    "Annan Athletic", "Clyde", "Dumbarton",
+    "Edinburgh City", "Elgin City", "Forfar Athletic",
+    "Kelty Hearts", "Stirling Albion", "Stranraer",
+    "The Spartans"
+]
+
+ALL_TEAMS = sorted(set(
+    PREMIER_LEAGUE_TEAMS + CHAMPIONSHIP_TEAMS + LEAGUE_ONE_TEAMS +
+    LEAGUE_TWO_TEAMS + SCOTTISH_PREMIERSHIP_TEAMS +
+    SCOTTISH_CHAMPIONSHIP_TEAMS + SCOTTISH_LEAGUE_ONE_TEAMS +
+    SCOTTISH_LEAGUE_TWO_TEAMS
+))
 
 #
-# UTILITÁRIOS
+# UTILITIES
 #
 
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
-def get_brasilia_time():
-    utc = datetime.now(timezone.utc)
-    return utc - timedelta(hours=3)
-
 #
-# BANCO DE DADOS
+# DATABASE
 #
 
 def get_conn():
@@ -147,7 +224,7 @@ def init_database():
         );
     """)
 
-    # Inicializa admin padrão se não existir
+    # Create default admin if not exists
     cursor.execute("SELECT id FROM players WHERE is_admin=1 LIMIT 1")
     if not cursor.fetchone():
         cursor.execute(
@@ -155,7 +232,7 @@ def init_database():
             ("admin", hash_password("admin123"))
         )
 
-    # Garante que cada jogador tenha registro na standings
+    # Ensure every player has a standings record
     cursor.execute("""
         INSERT OR IGNORE INTO standings (player_id, total_points, bonus_points, wins, draws, losses, rounds_played, total_goals)
         SELECT id, 0, 0, 0, 0, 0, 0, 0 FROM players
@@ -165,7 +242,7 @@ def init_database():
     conn.close()
 
 #
-# FUNÇÕES DO BANCO
+# DATABASE FUNCTIONS
 #
 
 def get_player(player_id=None, name=None):
@@ -187,7 +264,6 @@ def get_players():
     return get_player()
 
 def get_current_round():
-    """Retorna o número da rodada ativa ou None"""
     conn = get_conn()
     cursor = conn.cursor()
     cursor.execute("SELECT round_number FROM game_rounds WHERE status != 'completed' ORDER BY round_number DESC LIMIT 1")
@@ -260,7 +336,6 @@ def save_picks(player_id, round_number, teams):
     conn.close()
 
 def get_all_picks(round_number):
-    """Retorna todos os picks de uma rodada: {player_id: [team1, team2, ...]}"""
     conn = get_conn()
     cursor = conn.cursor()
     cursor.execute("""
@@ -296,33 +371,27 @@ def get_matchups(round_number):
     return [dict(r) for r in rows]
 
 def generate_matchups(round_number):
-    """Sorteia os confrontos da rodada"""
     conn = get_conn()
     cursor = conn.cursor()
-
-    # Pega jogadores que já fizeram picks
     cursor.execute("""
         SELECT DISTINCT p.player_id, pl.name
         FROM picks p
         JOIN players pl ON pl.id = p.player_id
         WHERE p.round_number = ?
     """, (round_number,))
-    players = [dict(r) for r in rows]
+    players = [dict(r) for r in cursor.fetchall()]
     random.shuffle(players)
 
-    if len(players) <2:
+    if len(players) < 2:
         conn.close()
-        return False, "Precisa de pelo menos 2 jogadores com picks para gerar confrontos."
+        return False, "Need at least 2 players with picks to generate matchups."
 
-    # Se número ímpar, um jogador fica de bye (bye = vitória automática)
     by_player = None
     if len(players) % 2 != 0:
         by_player = players.pop()
 
-    # Limpa matchups anteriores
     cursor.execute("DELETE FROM matchups WHERE round_number = ?", (round_number,))
 
-    # Gera pares
     for i in range(0, len(players), 2):
         if i + 1 < len(players):
             p1 = players[i]
@@ -332,7 +401,6 @@ def generate_matchups(round_number):
                 VALUES (?, ?, ?)
             """, (round_number, p1['player_id'], p2['player_id']))
 
-    # Bye: jogador sem adversário ganha 3 pontos (vitória automática)
     if by_player:
         cursor.execute("""
             INSERT INTO matchups (round_number, player1_id, player2_id, player1_points, player2_points, player1_goals)
@@ -341,14 +409,12 @@ def generate_matchups(round_number):
 
     conn.commit()
     conn.close()
-    return True, f"Confrontos gerados para {len(players)} jogadores."
+    return True, f"Matchups generated for {len(players)} players."
 
 def calculate_round_scores(round_number):
-    """Calcula a pontuação de todos os confrontos de uma rodada"""
     conn = get_conn()
     cursor = conn.cursor()
 
-    # Pega resultados dos matches
     cursor.execute("""
         SELECT home_team, away_team, home_goals, away_goals
         FROM matches
@@ -360,10 +426,8 @@ def calculate_round_scores(round_number):
         match_results[d['home_team']] = d['home_goals']
         match_results[d['away_team']] = d['away_goals']
 
-    # Pega todos os picks da rodada
     all_picks = get_all_picks(round_number)
 
-    # Calcula total de gols por jogador
     player_goals = {}
     for pid, data in all_picks.items():
         total = 0
@@ -372,7 +436,6 @@ def calculate_round_scores(round_number):
                 total += match_results[team]
         player_goals[pid] = total
 
-    # Atualiza matchups com os gols
     cursor.execute("SELECT * FROM matchups WHERE round_number = ?", (round_number,))
     matchups = cursor.fetchall()
 
@@ -383,7 +446,6 @@ def calculate_round_scores(round_number):
         p1_goals = player_goals.get(p1_id, 0)
         p2_goals = player_goals.get(p2_id, 0)
 
-        # Caso de bye
         if p1_id == p2_id:
             p1_points = 3
             p2_points = 0
@@ -404,12 +466,10 @@ def calculate_round_scores(round_number):
             WHERE id=?
         """, (p1_goals, p2_goals, p1_points, p2_points, m['id']))
 
-    # Bônus: jogador com maior somatório de gols da rodada
     if player_goals:
         max_goals = max(player_goals.values())
         bonus_players = [pid for pid, g in player_goals.items() if g == max_goals and g > 0]
 
-        # Atualiza standings
         cursor.execute("SELECT * FROM matchups WHERE round_number = ?", (round_number,))
         updated_matchups = cursor.fetchall()
 
@@ -423,8 +483,7 @@ def calculate_round_scores(round_number):
                 goals = m[goals_field]
                 bonus = BONUS_POINTS if pid in bonus_players else 0
 
-                # Verifica se ganhou/perdeu/empatou
-                if m['player1_id'] == m['player2_id']:  # bye
+                if m['player1_id'] == m['player2_id']:
                     is_win = 1
                     is_draw = 0
                     is_loss = 0
@@ -451,12 +510,11 @@ def calculate_round_scores(round_number):
                 """, (pid, pts + bonus, bonus, is_win, is_draw, is_loss, goals,
                       pts + bonus, bonus, is_win, is_draw, is_loss, goals))
 
-    # Marca rodada como concluída
     cursor.execute("UPDATE game_rounds SET status = 'completed' WHERE round_number = ?", (round_number,))
 
     conn.commit()
     conn.close()
-    return True, "Pontuação calculada com sucesso!"
+    return True, "Scores calculated successfully!"
 
 def get_standings():
     conn = get_conn()
@@ -480,7 +538,6 @@ class FootballAPIClient:
         self.api_key = api_key
         self.headers = {
             "x-apisports-key": api_key,
-            "x-apisports-format": "json"
         }
 
     def _get(self, endpoint, params=None):
@@ -495,11 +552,10 @@ class FootballAPIClient:
                     return data
             return None
         except Exception as e:
-            st.error(f"Erro na API: {e}")
+            st.error(f"API error: {e}")
             return None
 
-    def get_current_round(self, league_id=SERIE_A_ID):
-        """Retorna a rodada atual de uma liga"""
+    def get_current_round(self, league_id):
         data = self._get("fixtures/rounds", {
             "league": league_id,
             "season": SEASON,
@@ -510,7 +566,6 @@ class FootballAPIClient:
         return None
 
     def get_round_fixtures(self, league_id, round_name):
-        """Retorna todas as partidas de uma rodada"""
         data = self._get("fixtures", {
             "league": league_id,
             "season": SEASON,
@@ -521,72 +576,60 @@ class FootballAPIClient:
         return []
 
     def fetch_and_save_round(self, round_number):
-        """Busca resultados de Série A e B e salva no banco"""
+        """Fetch results from all UK leagues and save to database"""
         try:
-            # Tenta Série A
-            round_a = self.get_current_round(SERIE_A_ID)
-            fixtures_a = self.get_round_fixtures(SERIE_A_ID, f"Regular Season - {round_number}") if round_a else []
-
-            # Tenta Série B
-            round_b = self.get_current_round(SERIE_B_ID)
-            fixtures_b = []
-            if round_b:
+            total_saved = 0
+            for league_name, league_id in LEAGUES:
                 try:
-                    fixtures_b = self.get_round_fixtures(SERIE_B_ID, f"Regular Season - {round_number}")
-                except:
-                    pass
+                    round_data = self.get_current_round(league_id)
+                    if not round_data:
+                        continue
 
-            fixtures = []
-            for f in fixtures_a:
-                fixtures.append(('serie_a', f))
-            for f in fixtures_b:
-                fixtures.append(('serie_b', f))
+                    fixtures = self.get_round_fixtures(league_id, round_data)
 
-            if not fixtures:
-                return False, "Nenhuma partida encontrada para esta rodada."
+                    for f in fixtures:
+                        status = f['fixture']['status']['short']
+                        home = f['teams']['home']['name']
+                        away = f['teams']['away']['name']
+                        home_goals = f['goals']['home']
+                        away_goals = f['goals']['away']
+                        fixture_id = f['fixture']['id']
+                        is_finished = status in ('FT', 'AET', 'PEN')
+                        save_match(
+                            round_number, league_name,
+                            home, away,
+                            home_goals, away_goals,
+                            'finished' if is_finished else 'scheduled',
+                            fixture_id
+                        )
+                        total_saved += 1
+                except Exception:
+                    continue
 
-            saved = 0
-            for league, f in fixtures:
-                status = f['fixture']['status']['short']
-                home = f['teams']['home']['name']
-                away = f['teams']['away']['name']
-                home_goals = f['goals']['home']
-                away_goals = f['goals']['away']
-                fixture_id = f['fixture']['id']
-
-                # Mapeia status
-                is_finished = status in ('FT', 'AET', 'PEN')
-                save_match(
-                    round_number, league,
-                    home, away,
-                    home_goals, away_goals,
-                    'finished' if is_finished else 'scheduled',
-                    fixture_id
-                )
-                saved += 1
-
-            return True, f"{saved} partidas salvas para a Rodada {round_number}."
+            if total_saved == 0:
+                return False, "No matches found for this round."
+            return True, f"{total_saved} matches saved for Round {round_number}."
 
         except Exception as e:
-            return False, f"Erro ao buscar dados: {e}"
+            return False, f"Error fetching data: {e}"
 
 #
-# INTERFACE STREAMLIT
+# STREAMLIT INTERFACE
 #
 
 def login_screen():
     st.markdown("""
     <h1 style='text-align: center;'>🏆 Football Fantasy</h1>
-    <h3 style='text-align: center; color: #666;'>Brasileirão Série A & B</h3>
+    <h3 style='text-align: center; color: #FFD700;'>UK Edition — Premier League, EFL &amp; SPFL</h3>
     <hr>
     """, unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         with st.form("login_form"):
-            name = st.text_input("Seu nome")
-            password = st.text_input("Senha", type="password")
-            submit = st.form_submit_button("Entrar / Cadastrar", use_container_width=True)
+            name = st.text_input("Your name")
+            password = st.text_input("Password", type="password")
+            submit = st.form_submit_button("Sign in / Register", use_container_width=True)
 
         if submit and name:
             conn = get_conn()
@@ -601,56 +644,62 @@ def login_screen():
                     st.session_state['player'] = player
                     st.rerun()
                 else:
-                    st.error("Senha incorreta!")
+                    st.error("Incorrect password!")
             else:
                 cursor.execute(
                     "INSERT INTO players (name, password_hash) VALUES (?, ?)",
                     (name, pw_hash)
                 )
                 conn.commit()
-                # Cria registro na standings
                 cursor.execute("""
                     INSERT INTO standings (player_id) VALUES (?)
                     ON CONFLICT(player_id) DO NOTHING
                 """, (cursor.lastrowid,))
                 conn.commit()
-                st.success("Conta criada! Faça login.")
+                st.success("Account created! Please sign in.")
                 conn.close()
                 st.rerun()
             conn.close()
 
         st.markdown("---")
         st.markdown("""
-        **🏆 Como funciona:**
-        - Cada rodada, escolha **5 times** do Brasileirão Série A e B
-        - Seus pontos = **soma dos gols** que esses times fizeram na rodada
-        - Você é sorteado em um **confronto** contra outro jogador
-        - **Vencedor = 3 pontos**, Empate = 1 ponto cada
-        - **Bônus:** maior pontuação da rodada ganha +1 ponto extra
+        **🏆 How it works:**
+        - Each round, pick **5 teams** from the Premier League, EFL, and SPFL
+        - Your score = **total goals** scored by those teams in that round
+        - You're randomly drawn against another player in a **head-to-head match**
+        - **Winner = 3 points**, Draw = 1 point each
+        - **Bonus:** highest scoring player of the round gets +1 extra point
+        """)
+
+        st.markdown("---")
+        st.markdown("### 📺 Check fixtures & results at:")
+        st.markdown("""
+- [Premier League](https://www.premierleague.com) — Official PL site
+- [EFL Championship / League One / League Two](https://www.efl.com/competitions/efl-championship/) — Official EFL site
+- [SPFL (Scottish Football)](https://spfl.co.uk/) — Official SPFL site
         """)
 
 def admin_panel():
-    st.header("🔧 Painel do Administrador")
+    st.header("🔧 Admin Panel")
     players = get_players()
 
-    tab1, tab2, tab3, tab4 = st.tabs(["📋 Rodadas", "📊 Gerenciar Resultados", "👥 Jogadores", "⚙️ Config"])
+    tab1, tab2, tab3, tab4 = st.tabs(["📋 Rounds", "📊 Manage Results", "👥 Players", "⚙️ Settings"])
 
     with tab1:
         col1, col2 = st.columns(2)
 
         with col1:
-            st.subheader("Iniciar Nova Rodada")
-            round_num = st.number_input("Número da rodada", min_value=1, max_value=38, value=20)
+            st.subheader("Start New Round")
+            round_num = st.number_input("Round number", min_value=1, max_value=46, value=1)
 
             api_key = st.secrets.get("API_FOOTBALL_KEY", "")
             use_api = len(api_key) > 0
 
-            if st.button("🚀 Iniciar Rodada", use_container_width=True):
+            if st.button("🚀 Start Round", use_container_width=True):
                 get_or_create_round(round_num)
-                status = get_round_status(round_num)
 
                 if use_api:
-                    with st.spinner("Buscando dados da rodada na internet..."):
+                    with st.spinner("Fetching match data from the internet..."):
                         client = FootballAPIClient(api_key)
                         success, msg = client.fetch_and_save_round(round_num)
                         if success:
@@ -658,36 +707,35 @@ def admin_panel():
                             finished = [m for m in matches if m['status'] == 'finished']
                             if finished:
                                 set_round_status(round_num, 'picking')
-                                st.success(f"Rodada {round_num} iniciada! {len(finished)} jogos com resultados carregados.")
+                                st.success(f"Round {round_num} started! {len(finished)} finished matches loaded.")
                             else:
-                                st.warning("Nenhum jogo finalizado ainda nesta rodada. Os jogadores podem ver os times e escolher.")
+                                st.warning("No finished matches yet in this round. Players can still see the teams and choose.")
                                 set_round_status(round_num, 'picking')
                         else:
-                            st.warning(f"{msg} — você pode cadastrar resultados manualmente.")
+                            st.warning(f"{msg} — you can enter results manually.")
                             set_round_status(round_num, 'picking')
                 else:
                     set_round_status(round_num, 'picking')
-                    st.info("Modo manual: cadastre os resultados na aba 'Gerenciar Resultados'.")
+                    st.info("Manual mode: enter results in the 'Manage Results' tab.")
                 st.rerun()
 
         with col2:
-            st.subheader("Status Atual")
+            st.subheader("Current Status")
             current = get_current_round()
             if current:
                 status = get_round_status(current)
-                st.metric("Rodada Ativa", f"{current}ª Rodada")
+                st.metric("Active Round", f"Round {current}")
                 st.metric("Status", status.upper())
 
                 if status == 'picking':
                     player_count = get_all_picks(current)
-                    st.metric("Jogadores que já escolheram", len(player_count))
+                    st.metric("Players who have picked", len(player_count))
                 elif status == 'closed':
                     matchups = get_matchups(current)
-                    st.metric("Confrontos gerados", len(matchups))
+                    st.metric("Matchups generated", len(matchups))
 
-                # Ações
                 if status == 'picking':
-                    if st.button("🔒 Fechar Picks e Sortear Confrontos", use_container_width=True):
+                    if st.button("🔒 Close Picks & Draw Matchups", use_container_width=True):
                         success, msg = generate_matchups(current)
                         if success:
                             set_round_status(current, 'closed')
@@ -697,7 +745,7 @@ def admin_panel():
                             st.warning(msg)
 
                 elif status == 'closed':
-                    if st.button("📊 Calcular Pontuação!", use_container_width=True, type="primary"):
+                    if st.button("📊 Calculate Scores!", use_container_width=True, type="primary"):
                         success, msg = calculate_round_scores(current)
                         if success:
                             st.success(msg)
@@ -706,30 +754,28 @@ def admin_panel():
                         else:
                             st.error(msg)
             else:
-                st.info("Nenhuma rodada ativa. Inicie uma acima.")
+                st.info("No active round. Start one above.")
 
     with tab2:
-        st.subheader("Gerenciar Resultados dos Jogos")
-        round_edit = st.number_input("Rodada para editar", min_value=1, max_value=38, value=get_current_round() or 1)
+        st.subheader("Manage Match Results")
+        round_edit = st.number_input("Round to edit", min_value=1, max_value=46, value=get_current_round() or 1)
 
         matches = get_matches(round_edit)
         if matches:
-            # Filtro por liga
-            league_filter = st.selectbox("Filtrar por liga", ["Todas", "Série A", "Série B"])
+            league_filter = st.selectbox("Filter by league", ["All", "Premier League", "Championship", "League One", "League Two",
+                                                               "Scottish Premiership", "Scottish Championship", "Scottish League One", "Scottish League Two"])
             filtered = matches
-            if league_filter == "Série A":
-                filtered = [m for m in matches if m['league'] == 'serie_a']
-            elif league_filter == "Série B":
-                filtered = [m for m in matches if m['league'] == 'serie_b']
+            if league_filter != "All":
+                filtered = [m for m in matches if m['league'] == league_filter]
 
-            st.info(f"Mostrando {len(filtered)} partidas. ✏️ Edite os placares diretamente:")
+            st.info(f"Showing {len(filtered)} matches. Edit scores directly:")
             for match in filtered:
                 cols = st.columns([3, 1, 1, 1, 3])
                 with cols[0]:
                     st.markdown(f"**{match['home_team']}**")
                 with cols[1]:
                     home_goals = st.number_input(
-                        f"gols {match['home_team'][:8]}",
+                        f"h_{match['id']}",
                         value=match['home_goals'] if match['home_goals'] is not None else 0,
                         min_value=0, max_value=20,
                         key=f"h_{match['id']}",
@@ -739,7 +785,7 @@ def admin_panel():
                     st.markdown("×")
                 with cols[3]:
                     away_goals = st.number_input(
-                        f"gols {match['away_team'][:8]}",
+                        f"a_{match['id']}",
                         value=match['away_goals'] if match['away_goals'] is not None else 0,
                         min_value=0, max_value=20,
                         key=f"a_{match['id']}",
@@ -748,44 +794,43 @@ def admin_panel():
                 with cols[4]:
                     st.markdown(f"**{match['away_team']}**")
 
-                if st.button(f"💾 Salvar", key=f"save_{match['id']}"):
+                if st.button(f"💾 Save", key=f"save_{match['id']}"):
                     save_match(
                         round_edit, match['league'],
                         match['home_team'], match['away_team'],
                         home_goals, away_goals,
                         'finished', match['fixture_id']
                     )
-                    st.success(f"{match['home_team']} {home_goals}×{away_goals} {match['away_team']} salvo!")
+                    st.success(f"{match['home_team']} {home_goals}×{away_goals} {match['away_team']} saved!")
                     st.rerun()
         else:
-            st.info("Nenhuma partida cadastrada ainda nesta rodada.")
-            st.markdown("**Adicionar partida manualmente:**")
+            st.info("No matches registered yet for this round.")
+            st.markdown("**Add match manually:**")
             with st.form("add_match"):
                 col1, col2, col3 = st.columns([2, 1, 2])
                 with col1:
-                    home = st.text_input("Time da casa")
+                    home = st.text_input("Home team")
                 with col2:
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    hg = st.number_input("Gols casa", 0, 20, 0, label_visibility="collapsed")
+                    hg = st.number_input("Home goals", 0, 20, 0, label_visibility="collapsed")
                     st.markdown("×")
-                    ag = st.number_input("Gols fora", 0, 20, 0, label_visibility="collapsed")
+                    ag = st.number_input("Away goals", 0, 20, 0, label_visibility="collapsed")
                 with col3:
-                    away = st.text_input("Time visitante")
-                league = st.selectbox("Liga", ["serie_a", "serie_b"])
-                if st.form_submit_button("➕ Adicionar"):
+                    away = st.text_input("Away team")
+                league = st.selectbox("League", [l[0] for l in LEAGUES])
+                if st.form_submit_button("➕ Add"):
                     save_match(round_edit, league, home.strip(), away.strip(), hg, ag, 'finished')
-                    st.success("Partida adicionada!")
+                    st.success("Match added!")
                     st.rerun()
 
     with tab3:
-        st.subheader(f"Jogadores Cadastrados ({len(players)})")
+        st.subheader(f"Registered Players ({len(players)})")
         for p in players:
             cols = st.columns([3, 1])
             with cols[0]:
                 st.markdown(f"{'👑 ' if p['is_admin'] else '👤 '}**{p['name']}**")
             with cols[1]:
                 if not p['is_admin']:
-                    if st.button(f"❌ Remover", key=f"del_{p['id']}"):
+                    if st.button(f"❌ Remove", key=f"del_{p['id']}"):
                         conn = get_conn()
                         c = conn.cursor()
                         c.execute("DELETE FROM players WHERE id = ?", (p['id'],))
@@ -795,31 +840,31 @@ def admin_panel():
                         st.rerun()
 
     with tab4:
-        st.subheader("Configuração da API")
-        key_status = "✅ Configurada" if st.secrets.get("API_FOOTBALL_KEY", "") else "❌ Não configurada"
+        st.subheader("API Configuration")
+        key_status = "✅ Configured" if st.secrets.get("API_FOOTBALL_KEY", "") else "❌ Not configured"
         st.markdown(f"**API-Football:** {key_status}")
         if not st.secrets.get("API_FOOTBALL_KEY", ""):
             st.warning("""
-            Para buscar resultados automaticamente:
-            1. Acesse https://dashboard.api-football.com/register
-            2. Crie conta grátis (100 req/dia)
-            3. Copie sua API key
-            4. Adicione nos Secrets do Streamlit Cloud como `API_FOOTBALL_KEY`
+            To fetch results automatically:
+            1. Go to https://dashboard.api-football.com/register
+            2. Create a free account (100 req/day)
+            3. Copy your API key
+            4. Add it in Streamlit Cloud Secrets as `API_FOOTBALL_KEY`
             """)
 
-        if st.button("🔄 Resetar banco de dados (cuidado!)"):
-            if st.checkbox("Confirmo que quero apagar todos os dados"):
+        if st.button("🔄 Reset Database (careful!)"):
+            if st.checkbox("I confirm I want to delete all data"):
                 os.remove(DB_PATH)
                 init_database()
-                st.success("Banco resetado!")
+                st.success("Database reset!")
                 st.rerun()
 
 def player_dashboard(player):
-    st.header(f"👋 Olá, **{player['name']}**!")
+    st.header(f"👋 Hello, **{player['name']}**!")
     current_round = get_current_round()
 
     if not current_round:
-        st.info("⏳ Aguardando o administrador iniciar uma nova rodada.")
+        st.info("⏳ Waiting for the admin to start a new round.")
         return
 
     status = get_round_status(current_round)
@@ -827,32 +872,42 @@ def player_dashboard(player):
     with round_info:
         col1, col2 = st.columns([2, 1])
         with col1:
-            st.metric("Rodada Atual", f"{current_round}ª Rodada")
+            st.metric("Current Round", f"Round {current_round}")
         with col2:
             st.metric("Status", status.upper())
 
-    # Mostra partidas da rodada
+    st.markdown("---")
+    st.markdown("📺 **Check full fixtures & results at:**")
+    st.markdown("""
+- 🏴󠁧󠁢󠁥󠁮󠁧󠁿 [Premier League](https://www.premierleague.com)
+- 🏴󠁧󠁢󠁥󠁮󠁧󠁿 [EFL Championship](https://www.efl.com/competitions/efl-championship/)
+- 🏴󠁧󠁢󠁥󠁮󠁧󠁿 [EFL League One](https://www.efl.com/competitions/efl-league-one/)
+- 🏴󠁧󠁢󠁥󠁮󠁧󠁿 [EFL League Two](https://www.efl.com/competitions/efl-league-two/)
+- 🏴󠁧󠁢󠁳󠁣󠁴󠁿 [SPFL Premiership & lower](https://spfl.co.uk/)
+    """)
+
+    # Show matches
     matches = get_matches(current_round)
     if matches:
-        with st.expander("📋 Jogos desta rodada", expanded=True):
-            for league in ['serie_a', 'serie_b']:
-                league_matches = [m for m in matches if m['league'] == league]
+        with st.expander("📋 Matches this round", expanded=True):
+            league_order = ["Premier League", "Championship", "League One", "League Two",
+                           "Scottish Premiership", "Scottish Championship", "Scottish League One", "Scottish League Two"]
+            for league_name in league_order:
+                league_matches = [m for m in matches if m['league'] == league_name]
                 if league_matches:
-                    league_name = "🇧🇷 Série A" if league == 'serie_a' else "🇧🇷 Série B"
                     st.markdown(f"**{league_name}**")
                     for m in league_matches:
                         if m['status'] == 'finished':
                             st.markdown(f"• {m['home_team']} **{m['home_goals']}×{m['away_goals']}** {m['away_team']}")
                         else:
-                            st.markdown(f"• {m['home_team']} × {m['away_team']} _(aguardando)_")
+                            st.markdown(f"• {m['home_team']} × {m['away_team']} _(awaiting)_")
 
-    # Fase de picks
+    # Picking phase
     if status == 'picking':
         st.markdown("---")
-        st.subheader("🎯 Escolha seus 5 times")
+        st.subheader("🎯 Pick Your 5 Teams")
         my_picks = get_picks(player['id'], current_round)
 
-        # Pega todos os times disponíveis (das partidas cadastradas)
         available_teams = []
         for m in matches:
             if m['home_team'] not in available_teams:
@@ -862,30 +917,28 @@ def player_dashboard(player):
         available_teams = sorted(set(available_teams + ALL_TEAMS))
 
         selected = st.multiselect(
-            f"Selecione **{MAX_PICKS} times** (já escolheu {len(my_picks)}/{MAX_PICKS})",
+            f"Select **{MAX_PICKS} teams** (you've picked {len(my_picks)}/{MAX_PICKS})",
             options=available_teams,
             default=my_picks,
             max_selections=MAX_PICKS,
-            placeholder="Clique para escolher os times..."
+            placeholder="Click to choose your teams..."
         )
 
-        if st.button("💾 Salvar meus picks", use_container_width=True, type="primary"):
+        if st.button("💾 Save My Picks", use_container_width=True, type="primary"):
             if len(selected) == MAX_PICKS:
                 save_picks(player['id'], current_round, selected)
-                st.success(f"✅ {MAX_PICKS} times salvos com sucesso!")
+                st.success(f"✅ {MAX_PICKS} teams saved successfully!")
                 st.rerun()
             else:
-                st.warning(f"Escolha exatamente {MAX_PICKS} times (você selecionou {len(selected)}).")
+                st.warning(f"Choose exactly {MAX_PICKS} teams (you selected {len(selected)}).")
 
-        # Jogadores que já escolheram
         all_picks = get_all_picks(current_round)
         st.markdown("---")
-        st.markdown(f"**Jogadores que já escolheram:** {len(all_picks)}")
+        st.markdown(f"**Players who have picked:** {len(all_picks)}")
         for pid, data in all_picks.items():
             st.markdown(f"✅ {data['name']}")
 
     elif status == 'closed':
-        # Mostra confrontos
         matchups = get_matchups(current_round)
         my_matchup = None
         for m in matchups:
@@ -894,7 +947,7 @@ def player_dashboard(player):
                 break
 
         st.markdown("---")
-        st.subheader("⚔️ Seu Confronto")
+        st.subheader("⚔️ Your Matchup")
         if my_matchup:
             opponent_id = my_matchup['player2_id'] if my_matchup['player1_id'] == player['id'] else my_matchup['player1_id']
             opponent_name = my_matchup['p2_name'] if my_matchup['player1_id'] == player['id'] else my_matchup['p1_name']
@@ -903,7 +956,7 @@ def player_dashboard(player):
 
             col1, col2 = st.columns(2)
             with col1:
-                st.markdown(f"### 🟢 Você")
+                st.markdown(f"### 🟢 You")
                 for t in my_picks_list:
                     st.markdown(f"- {t}")
             with col2:
@@ -911,12 +964,11 @@ def player_dashboard(player):
                 for t in opp_picks_list:
                     st.markdown(f"- {t}")
 
-            st.info("⏳ Aguardando o administrador calcular a pontuação...")
+            st.info("⏳ Waiting for the admin to calculate the scores...")
         else:
-            st.info("Você não está em nenhum confronto desta rodada (talvez não tenha escolhido seus times).")
+            st.info("You're not in any matchup this round (maybe you didn't pick your teams).")
 
     elif status == 'completed':
-        # Mostra resultado
         matchups = get_matchups(current_round)
         my_matchup = None
         for m in matchups:
@@ -926,14 +978,13 @@ def player_dashboard(player):
 
         if my_matchup:
             st.markdown("---")
-            st.subheader("📊 Resultado da Rodada")
+            st.subheader("📊 Round Result")
             is_p1 = my_matchup['player1_id'] == player['id']
             my_goals = my_matchup['player1_goals'] if is_p1 else my_matchup['player2_goals']
             opp_goals = my_matchup['player2_goals'] if is_p1 else my_matchup['player1_goals']
             my_pts = my_matchup['player1_points'] if is_p1 else my_matchup['player2_points']
             my_bonus = 0
 
-            # Verifica bônus
             all_picks = get_all_picks(current_round)
             player_goals = {}
             for m in matchups:
@@ -948,70 +999,77 @@ def player_dashboard(player):
 
             col1, col2 = st.columns(2)
             with col1:
-                st.metric("Seus gols", my_goals)
+                st.metric("Your goals", my_goals)
             with col2:
-                st.metric("Gols do adversário", opp_goals)
+                st.metric("Opponent's goals", opp_goals)
 
             col1, col2, col3 = st.columns(3)
             with col1:
-                st.metric("🏆 Pontos do confronto", my_pts)
+                st.metric("🏆 Match points", my_pts)
             with col2:
-                st.metric("⭐ Bônus", my_bonus)
+                st.metric("⭐ Bonus", my_bonus)
             with col3:
-                st.metric("📊 Total rodada", my_pts + my_bonus)
+                st.metric("📊 Round total", my_pts + my_bonus)
 
 def leaderboard_screen():
-    st.header("🏆 Classificação Geral")
+    st.header("🏆 Overall Standings")
     standings = get_standings()
 
     if standings:
         df = pd.DataFrame(standings)
         df = df.rename(columns={
-            'name': 'Jogador',
+            'name': 'Player',
             'total_points': 'Pts',
-            'bonus_points': 'Bônus',
-            'wins': 'V',
-            'draws': 'E',
-            'losses': 'D',
+            'bonus_points': 'Bonus',
+            'wins': 'W',
+            'draws': 'D',
+            'losses': 'L',
             'rounds_played': 'R',
-            'total_goals': 'Gols'
+            'total_goals': 'Goals'
         })
         df.insert(0, '#', range(1, len(df) + 1))
 
         st.dataframe(
-            df[['#', 'Jogador', 'Pts', 'Bônus', 'V', 'E', 'D', 'Gols', 'R']],
+            df[['#', 'Player', 'Pts', 'Bonus', 'W', 'D', 'L', 'Goals', 'R']],
             use_container_width=True,
             hide_index=True,
             column_config={
                 'Pts': st.column_config.NumberColumn(fontColor='#FFD700'),
-                'Jogador': st.column_config.TextColumn(width='large'),
+                'Player': st.column_config.TextColumn(width='large'),
             }
         )
 
         st.markdown("---")
-        st.markdown("🏅 **Legenda:** Pts = Pontos | V = Vitórias | E = Empates | D = Derrotas | Gols = Gols marcados | R = Rodadas")
+        st.markdown("🏅 **Key:** Pts = Points | W = Wins | D = Draws | L = Losses | Goals = Goals scored | R = Rounds")
     else:
-        st.info("Nenhum dado ainda. A classificação aparece após a primeira rodada pontuada.")
+        st.info("No data yet. The standings will appear after the first scored round.")
 
 #
-# APP PRINCIPAL
+# MAIN APP
 #
 
 def main():
     st.set_page_config(
-        page_title="Football Fantasy - Brasileirão",
+        page_title="Football Fantasy - UK Edition",
         page_icon="🏆",
         layout="wide",
         initial_sidebar_state="expanded"
     )
 
-    # CSS customizado
+    # Custom CSS
     st.markdown("""
     <style>
         .stApp { background: #0a0a1a; }
         .stApp h1, .stApp h2, .stApp h3 { color: #FFD700 !important; }
-        .stMetric label { color: #aaa !important; }
-        .stMetric [data-testid="stMetricValue"] { color: #FFD700 !important; font-size: 2em !important; }
+        .stApp h4, .stApp h5, .stApp h6, .stApp p { color: #FFD700 !important; }
+        .stTextInput label, .stPassword label { color: #FFD700 !important; font-weight: bold; }
+        .stTextInput input, .stPassword input {
+            background-color: #1a1a2e;
+            color: #ffffff;
+            border: 1px solid #FFD700;
+        }
+        .stForm [data-testid="stForm"] { background: transparent; }
+        .stMarkdown p, .stMarkdown li, .stMarkdown span:not(.emoji) { color: #e0c040 !important; }
         div[data-testid="stExpander"] { background: #1a1a2e; border: 1px solid #333; }
         .stButton button { border-radius: 8px; }
         .stButton button[kind="primary"] { background: #FFD700; color: #000; font-weight: bold; }
@@ -1019,49 +1077,51 @@ def main():
         .stSelectbox label, .stMultiSelect label { color: #ddd !important; }
         .stTabs [data-baseweb="tab-list"] { gap: 8px; }
         .stTabs [data-baseweb="tab"] { border-radius: 6px 6px 0 0; }
+        section[data-testid="stSidebar"] .stMarkdown p { color: #FFD700 !important; }
+        .stMetric label { color: #FFD700 !important; }
+        .stAlert { background-color: #1a1a2e; border: 1px solid #FFD700; }
     </style>
     """, unsafe_allow_html=True)
 
-    # Inicializa DB
+    # Init DB
     init_database()
 
     # Sidebar
     with st.sidebar:
         st.markdown("### 🏆 Football Fantasy")
-        st.markdown("Brasileirão Série A & B")
+        st.markdown("UK Edition — Premier League, EFL & SPFL")
 
         if 'player' in st.session_state:
             player = st.session_state['player']
             st.markdown(f"👤 **{player['name']}**")
 
-            menu = ["📊 Painel", "🏆 Classificação"]
+            menu = ["📊 Dashboard", "🏆 Standings"]
             if player['is_admin']:
                 menu.append("🔧 Admin")
 
             choice = st.radio("", menu, label_visibility="collapsed")
 
-            if st.button("🚪 Sair", use_container_width=True):
+            if st.button("🚪 Sign Out", use_container_width=True):
                 del st.session_state['player']
                 st.rerun()
         else:
             choice = "login"
 
-        # Info do campeonato
         current = get_current_round()
         if current:
-            st.markdown(f"📅 Rodada atual: **{current}ª**")
+            st.markdown(f"📅 Round: **{current}**")
         standings = get_standings()
         if standings:
-            st.markdown(f"👥 Jogadores: **{len(standings)}**")
+            st.markdown(f"👥 Players: **{len(standings)}**")
 
-    # Renderiza página
+    # Render page
     if 'player' not in st.session_state:
         login_screen()
     else:
         player = st.session_state['player']
-        if choice == "📊 Painel":
+        if choice == "📊 Dashboard":
             player_dashboard(player)
-        elif choice == "🏆 Classificação":
+        elif choice == "🏆 Standings":
             leaderboard_screen()
         elif choice == "🔧 Admin":
             admin_panel()
