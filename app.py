@@ -1040,7 +1040,7 @@ def leaderboard_screen():
             column_config={
                 'Player': st.column_config.TextColumn(width='large'),
             }
-        ))
+        )
 
         st.markdown("---")
         st.markdown("🏅 **Key:** Pts = Points | W = Wins | D = Draws | L = Losses | Goals = Goals scored | R = Rounds")
