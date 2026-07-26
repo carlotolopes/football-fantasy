@@ -622,23 +622,23 @@ def login_screen():
             password = st.text_input("Password", type="password")
             submit = st.form_submit_button("Sign in / Register", use_container_width=True)
 
-                if submit and name:
-            if not password:
+            if submit and name:
+                if not password:
                 st.error("Please enter a password.")
                 return
 
-            conn = get_conn()
-            cursor = conn.cursor()
-            pw_hash = hash_password(password)
-            cursor.execute("SELECT * FROM players WHERE name = ?", (name,))
-            player = cursor.fetchone()
+                conn = get_conn()
+                cursor = conn.cursor()
+                pw_hash = hash_password(password)
+                cursor.execute("SELECT * FROM players WHERE name = ?", (name,))
+                player = cursor.fetchone()
 
-            if player:
-                player = dict(player)
-                if player['password_hash'] == pw_hash:
-                    st.session_state['player'] = player
-                    conn.close()
-                    st.rerun()
+                if player:
+                    player = dict(player)
+                    if player['password_hash'] == pw_hash:
+                        st.session_state['player'] = player
+                        conn.close()
+                        st.rerun()
                 else:
                     st.error("Incorrect password!")
                     conn.close()
